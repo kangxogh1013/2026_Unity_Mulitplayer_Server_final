@@ -7,12 +7,13 @@ public class UserData
     public string NickName;
     public int Coin;
     public int Score;
-
     public string UnitList;
     public string Inventory;
 
     public UserData()
     {
+
+
     }
 
     public UserData(string nickName)

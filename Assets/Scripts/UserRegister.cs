@@ -1,7 +1,6 @@
 using Firebase.Database;
 using PimDeWitte.UnityMainThreadDispatcher;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class UserRegister : MonoBehaviour
@@ -16,10 +15,6 @@ public class UserRegister : MonoBehaviour
     [Header("UI")]
     [SerializeField] InputField NickNameInput;
     [SerializeField] Text CheckText;
-
-    [Header("Scene")]
-    [SerializeField] string NextSceneName = "ShopScene";
-    [SerializeField] bool LoadNextSceneAfterRegister = true;
 
     void Start()
     {
@@ -100,11 +95,6 @@ public class UserRegister : MonoBehaviour
                 PlayerPrefs.Save();
 
                 CheckText.text = "회원가입 완료";
-
-                if (LoadNextSceneAfterRegister)
-                {
-                    SceneManager.LoadScene(NextSceneName);
-                }
             });
         });
     }
