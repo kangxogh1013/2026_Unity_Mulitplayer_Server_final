@@ -10,6 +10,10 @@ public class ShopManager : MonoBehaviour
     [Header("UI")]
     [SerializeField] Text CoinText;
     [SerializeField] Text MessageText;
+    [SerializeField] Text MessageLogText;
+
+    [Header("Log")]
+    [SerializeField] int MaxLogLines = 8;
 
     [Header("Price")]
     [SerializeField] int DashBoosterPrice = 100;
@@ -22,6 +26,7 @@ public class ShopManager : MonoBehaviour
     string userKey;
     int coin;
     Dictionary<string, int> inventory = new Dictionary<string, int>();
+    List<string> messageLogs = new List<string>();
 
     void Start()
     {
@@ -31,7 +36,7 @@ public class ShopManager : MonoBehaviour
         userKey = PlayerPrefs.GetString("UserKey", "");
         if (string.IsNullOrEmpty(userKey))
         {
-            MessageText.text = "UserKey가 없습니다.";
+            AddMessageLog("UserKey가 없습니다.");
             return;
         }
 
@@ -46,7 +51,7 @@ public class ShopManager : MonoBehaviour
             {
                 dispatcher.Enqueue(() =>
                 {
-                    MessageText.text = "유저 데이터를 불러오지 못했습니다.";
+                    AddMessageLog("유저 데이터를 불러오지 못했습니다.");
                 });
                 return;
             }
@@ -67,7 +72,7 @@ public class ShopManager : MonoBehaviour
             dispatcher.Enqueue(() =>
             {
                 UpdateCoinText();
-                MessageText.text = "상점에 오신 것을 환영합니다.";
+                AddMessageLog("상점에 오신 것을 환영합니다.");
             });
         });
     }
@@ -75,6 +80,48 @@ public class ShopManager : MonoBehaviour
     void UpdateCoinText()
     {
         CoinText.text = "Coin : " + coin.ToString();
+    }
+
+    void AddMessageLog(string message)
+    {
+        MessageText.text = message;
+        messageLogs.Add(message);
+
+        if (messageLogs.Count > MaxLogLines)
+        {
+            messageLogs.RemoveRange(0, messageLogs.Count - MaxLogLines);
+        }
+
+        if (MessageLogText != null)
+        {
+            MessageLogText.text = string.Join("\n", messageLogs);
+        }
+    }
+
+    public void OnClickAddCoin()
+    {
+        coin += 100;
+
+        Dictionary<string, object> updates = new Dictionary<string, object>();
+        updates["Coin"] = coin;
+
+        reference.Child("UserInfo").Child(userKey).UpdateChildrenAsync(updates).ContinueWith(task =>
+        {
+            if (task.IsFaulted)
+            {
+                dispatcher.Enqueue(() =>
+                {
+                    AddMessageLog("코인 증가 실패");
+                });
+                return;
+            }
+
+            dispatcher.Enqueue(() =>
+            {
+                UpdateCoinText();
+                AddMessageLog("코인 +100");
+            });
+        });
     }
 
     public void OnClickBuyDashBooster()
@@ -96,7 +143,7 @@ public class ShopManager : MonoBehaviour
     {
         if (coin < price)
         {
-            MessageText.text = "코인이 부족합니다.";
+            AddMessageLog("코인이 부족합니다.");
             return;
         }
 
@@ -119,7 +166,7 @@ public class ShopManager : MonoBehaviour
             {
                 dispatcher.Enqueue(() =>
                 {
-                    MessageText.text = "구매 실패";
+                    AddMessageLog("구매 실패");
                 });
                 return;
             }
@@ -127,7 +174,7 @@ public class ShopManager : MonoBehaviour
             dispatcher.Enqueue(() =>
             {
                 UpdateCoinText();
-                MessageText.text = itemName + " 구매 완료";
+                AddMessageLog(itemName + " 구매 완료");
             });
         });
     }

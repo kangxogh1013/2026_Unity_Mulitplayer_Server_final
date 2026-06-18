@@ -12,12 +12,17 @@ public class InventoryManager : MonoBehaviour
     [SerializeField] Text ShieldChipCountText;
     [SerializeField] Text PortalCoreCountText;
     [SerializeField] Text MessageText;
+    [SerializeField] Text MessageLogText;
+
+    [Header("Log")]
+    [SerializeField] int MaxLogLines = 8;
 
     DatabaseReference reference;
     UnityMainThreadDispatcher dispatcher;
 
     string userKey;
     Dictionary<string, int> inventory = new Dictionary<string, int>();
+    List<string> messageLogs = new List<string>();
 
     void Start()
     {
@@ -27,7 +32,7 @@ public class InventoryManager : MonoBehaviour
         userKey = PlayerPrefs.GetString("UserKey", "");
         if (string.IsNullOrEmpty(userKey))
         {
-            MessageText.text = "UserKey가 없습니다.";
+            AddMessageLog("UserKey가 없습니다.");
             return;
         }
 
@@ -42,7 +47,7 @@ public class InventoryManager : MonoBehaviour
             {
                 dispatcher.Enqueue(() =>
                 {
-                    MessageText.text = "인벤토리를 불러오지 못했습니다.";
+                    AddMessageLog("인벤토리를 불러오지 못했습니다.");
                 });
                 return;
             }
@@ -60,7 +65,7 @@ public class InventoryManager : MonoBehaviour
             dispatcher.Enqueue(() =>
             {
                 UpdateInventoryText();
-                MessageText.text = "인벤토리 로드 완료";
+                AddMessageLog("인벤토리 로드 완료");
             });
         });
     }
@@ -70,6 +75,22 @@ public class InventoryManager : MonoBehaviour
         DashBoosterCountText.text = "DashBooster : " + GetCount("DashBooster");
         ShieldChipCountText.text = "ShieldChip : " + GetCount("ShieldChip");
         PortalCoreCountText.text = "PortalCore : " + GetCount("PortalCore");
+    }
+
+    void AddMessageLog(string message)
+    {
+        MessageText.text = message;
+        messageLogs.Add(message);
+
+        if (messageLogs.Count > MaxLogLines)
+        {
+            messageLogs.RemoveRange(0, messageLogs.Count - MaxLogLines);
+        }
+
+        if (MessageLogText != null)
+        {
+            MessageLogText.text = string.Join("\n", messageLogs);
+        }
     }
 
     int GetCount(string itemName)
@@ -98,7 +119,7 @@ public class InventoryManager : MonoBehaviour
     {
         if (!inventory.ContainsKey(itemName) || inventory[itemName] <= 0)
         {
-            MessageText.text = itemName + "이 없습니다.";
+            AddMessageLog(itemName + "이 없습니다.");
             return;
         }
 
@@ -115,7 +136,7 @@ public class InventoryManager : MonoBehaviour
             {
                 dispatcher.Enqueue(() =>
                 {
-                    MessageText.text = "사용 실패";
+                    AddMessageLog("사용 실패");
                 });
                 return;
             }
@@ -123,7 +144,7 @@ public class InventoryManager : MonoBehaviour
             dispatcher.Enqueue(() =>
             {
                 UpdateInventoryText();
-                MessageText.text = itemName + " 사용 완료";
+                AddMessageLog(itemName + " 사용 완료");
             });
         });
     }
